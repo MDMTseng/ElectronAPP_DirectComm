@@ -1,0 +1,25 @@
+{
+  "name": "electronwebdirect",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "electron .",
+    "clean": "rm -rf src/native/build",
+    "build:native": "npm run clean && node-gyp configure --directory=src/native && node-gyp build --directory=src/native",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^31.1.0",
+    "node-gyp": "^10.1.0"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.0.0"
+  }
+}

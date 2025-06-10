@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# New Feature Implementation Workflow
+
+When you are asked to implement a new feature, you must follow this eight-step process:
+
+1.  **Check Documentation First:** Review all relevant project documentation in `<prj root>/docs/` and all previous implementation logs in `<prj root>/docs/impl/`. This is critical for understanding context, requirements, and past decisions.
+
+2.  **Check Code:** Analyze the existing codebase to understand the current architecture, identify affected areas, and ensure the new feature integrates smoothly.
+
+3.  **Make a Plan:** Based on the findings from the documentation and code, create a detailed implementation plan.
+
+4.  **Write a Plan Document:** Formalize the plan into a clear and concise document and save it inside the `<prj root>/docs/plan/` directory.
+
+5.  **User Approval of Plan:** Present the plan document to the user for approval. You **must not** proceed with implementation until the user explicitly approves the plan.
+
+6.  **Implement the Plan:** Once the user approves the plan, execute the implementation according to the steps outlined in the document.
+
+7.  **Log the Implementation:** After implementation is complete, create a new document in the `<prj root>/docs/impl/` directory that logs the changes made.
+
+8.  **Test the Implementation:** Thoroughly test the new feature to ensure it functions correctly and does not introduce any regressions or bugs.

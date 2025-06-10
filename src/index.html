@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+</head>
+<body>
+    <h1>Renderer to Native Test</h1>
+    <p>
+        <button id="my-button">Get Data from Main</button>
+    </p>
+    <p>
+        Data from main: <strong id="data-display"></strong>
+    </p>
+
+    <hr>
+
+    <h2>Exchange Data with Dynamic Library</h2>
+    <p>
+        <button id="load-button">1. Load Library</button>
+        <button id="unload-button">3. Unload Library</button>
+    </p>
+    <p>
+        <strong>Status:</strong> <span id="lib-status">Not Loaded</span>
+    </p>
+    <p>
+        <button id="exchange-button">2. Exchange Data</button>
+    </p>
+    <p>
+        Data from dlib: <strong id="exchange-display"></strong>
+    </p>
+
+    <script src="renderer.js"></script>
+</body>
+</html> 
