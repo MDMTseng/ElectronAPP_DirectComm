@@ -29,6 +29,8 @@ cp -r "$BACKEND_DIR"/build/libdlib.dylib "$DIST_DIR"/backend
 echo "Build artifacts have been exported to the '$DIST_DIR' directory."
 
 
+
+
 # Create the distribution directory if it doesn't exist
 if [ ! -d "$DIST_DIR"/frontend ]; then
   mkdir -p "$DIST_DIR"/frontend
@@ -38,3 +40,17 @@ fi
 cp -r frontend/* "$DIST_DIR"/frontend
 
 echo "frontend artifacts have been exported to the '$DIST_DIR' directory."
+
+
+
+
+
+# Create the distribution directory if it doesn't exist
+if [ ! -d "$DIST_DIR"/native     ]; then
+  mkdir -p "$DIST_DIR"/native
+fi
+
+# Copy the build artifacts to the distribution directory
+cp -r native/* "$DIST_DIR"/native
+
+echo "native artifacts have been exported to the '$DIST_DIR' directory."
