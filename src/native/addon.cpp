@@ -75,9 +75,19 @@ Napi::Value ExchangeDataInPlace(const Napi::CallbackInfo& info) {
         return env.Null();
     }
 
+    // Handle optional can_override parameter
+    bool can_override = true; // default value
+    if (info.Length() >= 2) {
+        if (!info[1].IsBoolean()) {
+            ThrowError(env, "Second parameter must be a boolean");
+            return env.Null();
+        }
+        can_override = info[1].As<Napi::Boolean>().Value();
+    }
+
     Napi::Buffer<uint8_t> js_buffer = info[0].As<Napi::Buffer<uint8_t>>();
     
-    typedef size_t (*exchange_inplace_t)(void*, size_t);
+    typedef size_t (*exchange_inplace_t)(void*, size_t, bool);
     auto exchange_func = (exchange_inplace_t)GET_SYMBOL(dylib_handle, "exchange_inplace");
 
     if (!exchange_func) {
@@ -85,7 +95,7 @@ Napi::Value ExchangeDataInPlace(const Napi::CallbackInfo& info) {
         return env.Null();
     }
 
-    size_t bytes_written = exchange_func(js_buffer.Data(), js_buffer.Length());
+    size_t bytes_written = exchange_func(js_buffer.Data(), js_buffer.Length(), can_override);
     return Napi::Number::New(env, bytes_written);
 }
 

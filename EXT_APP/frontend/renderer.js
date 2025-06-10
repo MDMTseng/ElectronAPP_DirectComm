@@ -11,6 +11,7 @@ const exchangeDisplay = document.getElementById('exchange-display');
 const loadButton = document.getElementById('load-button');
 const unloadButton = document.getElementById('unload-button');
 const libStatus = document.getElementById('lib-status');
+const canOverrideCheckbox = document.getElementById('can-override-checkbox');
 
 myButton.addEventListener('click', () => {
     const data = addon.hello();
@@ -44,12 +45,19 @@ unloadButton.addEventListener('click', () => {
 exchangeButton.addEventListener('click', () => {
     // Create a buffer that is large enough to hold the result.
     const buffer = Buffer.alloc(128); 
+    const canOverride = canOverrideCheckbox.checked;
+    
     try {
-        const bytesWritten = addon.exchangeDataInPlace(buffer);
+        const bytesWritten = addon.exchangeDataInPlace(buffer, canOverride);
 
         if (bytesWritten > 0) {
-            // Display the part of the buffer that was written to.
-            exchangeDisplay.textContent = buffer.slice(0, bytesWritten).toString();
+            if (canOverride) {
+                // Display the part of the buffer that was written to.
+                exchangeDisplay.textContent = buffer.toString('utf8', 0, bytesWritten);
+            } else {
+                // In read-only mode, show that buffer wasn't modified and display the size that would be needed
+                exchangeDisplay.textContent = `Read-only mode: Buffer not modified. Would need ${bytesWritten} bytes.`;
+            }
         } else {
             exchangeDisplay.textContent = 'Error: dlib function returned 0, maybe buffer too small?';
         }
