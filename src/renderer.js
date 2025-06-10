@@ -40,11 +40,17 @@ unloadButton.addEventListener('click', () => {
 });
 
 exchangeButton.addEventListener('click', () => {
-    const myData = Buffer.from('Some data from JS');
+    // Create a buffer that is large enough to hold the result.
+    const buffer = Buffer.alloc(128); 
     try {
-        const resultBuffer = addon.exchangeData(myData);
-        // The result is a buffer, we need to convert it to a string to display.
-        exchangeDisplay.textContent = resultBuffer.toString();
+        const bytesWritten = addon.exchangeDataInPlace(buffer);
+
+        if (bytesWritten > 0) {
+            // Display the part of the buffer that was written to.
+            exchangeDisplay.textContent = buffer.slice(0, bytesWritten).toString();
+        } else {
+            exchangeDisplay.textContent = 'Error: dlib function returned 0, maybe buffer too small?';
+        }
     } catch (e) {
         exchangeDisplay.textContent = `Error: ${e.message}`;
     }

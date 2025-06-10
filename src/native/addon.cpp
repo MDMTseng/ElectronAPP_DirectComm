@@ -132,6 +132,45 @@ Napi::Value ExchangeData(const Napi::CallbackInfo& info) {
     return result_buffer;
 }
 
+// The new function that will call the dynamic library to modify data in-place
+Napi::Value ExchangeDataInPlace(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if (!dylib_handle) {
+        Napi::Error::New(env, "Library not loaded. Call LoadDyLib first.").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
+    // 1. Check input arguments
+    if (info.Length() < 1 || !info[0].IsBuffer()) {
+        Napi::TypeError::New(env, "Buffer expected").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+    Napi::Buffer<uint8_t> js_buffer = info[0].As<Napi::Buffer<uint8_t>>();
+
+    // 2. Get symbol for the 'exchange_inplace' function
+    typedef size_t (*exchange_inplace_t)(void*, size_t);
+#ifdef _WIN32
+    exchange_inplace_t exchange_func = (exchange_inplace_t)GetProcAddress(dylib_handle, "exchange_inplace");
+#else
+    exchange_inplace_t exchange_func = (exchange_inplace_t)dlsym(dylib_handle, "exchange_inplace");
+#endif
+
+    if (!exchange_func) {
+#ifdef _WIN32
+        Napi::Error::New(env, "Cannot load symbol 'exchange_inplace': " + std::to_string(GetLastError())).ThrowAsJavaScriptException();
+#else
+        Napi::Error::New(env, std::string("Cannot load symbol 'exchange_inplace': ") + dlerror()).ThrowAsJavaScriptException();
+#endif
+        return env.Null();
+    }
+
+    // 3. Call the 'exchange_inplace' function
+    size_t bytes_written = exchange_func(js_buffer.Data(), js_buffer.Length());
+
+    // 4. Return the number of bytes written
+    return Napi::Number::New(env, bytes_written);
+}
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "hello"),
@@ -140,6 +179,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
               Napi::Function::New(env, LoadDyLib));
   exports.Set(Napi::String::New(env, "exchangeData"),
               Napi::Function::New(env, ExchangeData));
+  exports.Set(Napi::String::New(env, "exchangeDataInPlace"),
+              Napi::Function::New(env, ExchangeDataInPlace));
   exports.Set(Napi::String::New(env, "unloadDyLib"),
               Napi::Function::New(env, UnloadDyLib));
   return exports;
