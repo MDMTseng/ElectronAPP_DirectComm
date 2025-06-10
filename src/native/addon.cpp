@@ -42,23 +42,26 @@ Napi::Value LoadDyLib(const Napi::CallbackInfo& info) {
         return env.Null();
     }
 
+    // Check if path argument is provided
+    if (info.Length() < 1 || !info[0].IsString()) {
+        Napi::TypeError::New(env, "String path expected as first argument").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
+    // Get the path from the argument
+    std::string dlib_path = info[0].As<Napi::String>().Utf8Value();
+
 #ifdef _WIN32
-    const char* dlib_path = "dlib.dll";
-    dylib_handle = LoadLibrary(dlib_path);
+    dylib_handle = LoadLibrary(dlib_path.c_str());
 #else
-    #if defined(__APPLE__)
-        const char* dlib_path = "@rpath/libdlib.dylib";
-    #else // Assume Linux
-        const char* dlib_path = "libdlib.so";
-    #endif
-    dylib_handle = dlopen(dlib_path, RTLD_LAZY);
+    dylib_handle = dlopen(dlib_path.c_str(), RTLD_LAZY);
 #endif
 
     if (!dylib_handle) {
 #ifdef _WIN32
-        Napi::Error::New(env, "Cannot open library: " + std::to_string(GetLastError())).ThrowAsJavaScriptException();
+        Napi::Error::New(env, "Cannot open library at '" + dlib_path + "': " + std::to_string(GetLastError())).ThrowAsJavaScriptException();
 #else
-        Napi::Error::New(env, std::string("Cannot open library: ") + dlerror()).ThrowAsJavaScriptException();
+        Napi::Error::New(env, std::string("Cannot open library at '") + dlib_path + "': " + dlerror()).ThrowAsJavaScriptException();
 #endif
     }
     return env.Undefined();

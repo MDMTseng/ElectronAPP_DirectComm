@@ -1,43 +1,141 @@
-const { app, BrowserWindow } = require('electron')
-const path = require('node:path')
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-function createWindow () {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Mode and path will be determined by BIOS selection
+let appMode = null; // 'dev' or 'prod'
+let baseArtifactPath = null; // Base path for artifacts (derived in prod, null in dev)
+let devServerPort = NaN; // Default dev port, can be overridden by BIOS
+let currentArtifactPath = null; // Use path from config
+
+let mainWindow = null;
+let biosWindow = null;
+
+function createBiosWindow() {
+  biosWindow = new BrowserWindow({
+    width: 600,
+    height: 550, // Adjusted height
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: true, 
+      contextIsolation: false, 
+    },
+    autoHideMenuBar: true,
+  });
+
+  biosWindow.loadFile('src/bios.html');
+
+  biosWindow.on('closed', () => {
+    biosWindow = null;
+    if (!mainWindow) {
+      app.quit();
     }
-  })
-
-  // and load the index.html of the app.
-  mainWindow.loadFile('src/index.html')
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+
+let current_config = null;
+// Updated to accept config object (mode, devServerPort, artifactPath)
+function createMainWindow(config) {
+  console.log(`Creating main window. Config:`, config);
+  if (biosWindow) {
+    biosWindow.close();
+  }
+  
+  current_config=config;
+  // Store config details globally
+  appMode = config.mode;
+  currentArtifactPath = config.artifactPath; // Use path from config
+  if (config.devServerPort) {
+      devServerPort = config.devServerPort;
+  }
+
+  const isDevMode = (appMode === 'dev');
+
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true, 
+      contextIsolation: false, 
+      devTools: true, // Always enable DevTools access
+    }
+  });
+
+  let loadUrl;
+  if (devServerPort && !isNaN(devServerPort)) {
+    loadUrl = `http://localhost:${devServerPort}`;
+    console.log(`Loading DEV URL: ${loadUrl}`);
+  } else { // Production mode
+    if (!currentArtifactPath) { // Check the path RECEIVED from BIOS
+      console.error('ERROR: Artifact path is required in production mode!');
+      app.quit();
+      return;
+    }
+    // Construct file path URL using the user-provided artifact path
+    const indexPath = path.join(currentArtifactPath, 'frontend', 'index.html');
+    loadUrl = `file://${indexPath}`;
+    console.log(`Loading PROD URL: ${loadUrl}`);
+  }
+
+  mainWindow.loadURL(loadUrl).catch(err => {
+      console.error(`Failed to load URL ${loadUrl}:`, err);
+  });
+
+  // Send relevant config to renderer once it's ready
+  mainWindow.webContents.on('did-finish-load', () => {
+      // Send the artifact path received from BIOS
+      const rendererConfig = { 
+          mode: appMode, 
+          artifactPath: currentArtifactPath // Send user-provided path (null in dev)
+      };
+      console.log('Main window finished loading. Sending config:', rendererConfig);
+      mainWindow?.webContents.send('set-app-config', rendererConfig);
+  });
+
+  if (isDevMode) {
+    mainWindow.webContents.openDevTools();
+  }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+    if (!biosWindow) {
+        app.quit();
+    }
+  });
+}
+
+// Listen for the signal with config object from bios.html
+ipcMain.on('launch-main-app', (event, config) => {
+  console.log(`Received launch request with config:`, config);
+  if (!mainWindow) { 
+    createMainWindow(config); // Pass the config object
+  } else {
+      console.warn('Main window already exists. Ignoring launch request.');
+  }
+});
+
+ipcMain.on('get-current-config', (event, config) => {
+  console.log('Getting current config:', current_config);
+  event.reply('current-config', current_config);
+  event.returnValue = current_config;
+});
+
+
+
 app.whenReady().then(() => {
-  createWindow()
+  createBiosWindow();
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+    if (BrowserWindow.getAllWindows().length === 0) {
+        if (!mainWindow) createBiosWindow(); 
+    }
+  });
+});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
-})
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});

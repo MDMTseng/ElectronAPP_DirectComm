@@ -1,6 +1,8 @@
 const path = require('path');
 // Correctly reference the addon from the src/native directory
-const addon = require(path.join(__dirname, 'native', 'build', 'Release', 'addon.node'));
+
+// console.log(path.join(__dirname, 'native', 'build', 'Release', 'addon.node'));
+const addon = require("/Users/mdm/workspace/LittleJourney/ElectronWebDirect/src/native/build/Release/addon.node");
 
 const myButton = document.getElementById('my-button');
 const dataDisplay = document.getElementById('data-display');
@@ -17,7 +19,7 @@ myButton.addEventListener('click', () => {
 
 loadButton.addEventListener('click', () => {
     try {
-        addon.loadDyLib();
+        addon.loadDyLib("/Users/mdm/workspace/LittleJourney/ElectronWebDirect/EXT_APP/backend/build/libdlib.dylib");
         libStatus.textContent = 'Loaded';
         libStatus.style.color = 'green';
         exchangeDisplay.textContent = '';

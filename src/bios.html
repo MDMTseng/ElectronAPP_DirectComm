@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIOS - App Configuration</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f0f0f0; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: 40px auto; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="radio"] { margin-right: 5px; }
+        .radio-group label { display: inline-block; margin-right: 15px; font-weight: normal; }
+        .input-group { margin-bottom: 20px; }
+        #artifactPathGroup { display: none; } /* Ensure this is present and correct */
+        #devServerPortGroup { display: block; } /* Start with dev options visible by default */
+        button { padding: 12px 25px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #status { margin-top: 15px; font-style: italic; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Application Configuration</h2>
+
+        <div class="input-group radio-group">
+            <label>Mode:</label>
+            <label><input type="radio" name="mode" value="dev" checked> Development</label>
+            <label><input type="radio" name="mode" value="prod"> Production</label>
+        </div>
+
+        <div id="devServerPortGroup" class="input-group">
+            <label for="devPort">Development Server Port:</label>
+            <input type="number" id="devPort" value="5173" placeholder="e.g., 5173">
+        </div>
+
+        <div id="artifactPathGroup" class="input-group">
+            <label for="artifactPath">Production Artifact Path (APP/dist):</label>
+            <input type="text" id="artifactPath" placeholder="/path/to/your/project/APP/dist">
+            <small>Enter the absolute path to the directory containing the built application (usually APP/dist).</small>
+        </div>
+
+        <button id="launchButton">Launch Application</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const pathInput = document.getElementById('artifactPath');
+        const portInput = document.getElementById('devPort'); 
+        const launchButton = document.getElementById('launchButton');
+        const statusDiv = document.getElementById('status');
+        const modeRadios = document.querySelectorAll('input[name="mode"]');
+        const artifactPathGroup = document.getElementById('artifactPathGroup'); 
+        const devServerPortGroup = document.getElementById('devServerPortGroup'); 
+
+        function updateVisibility() {
+            const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+            if (selectedMode === 'prod') {
+                // Production mode: SHOW artifact path, HIDE dev port
+                artifactPathGroup.style.display = 'block';
+                devServerPortGroup.style.display = 'none'; 
+            } else { // Dev mode
+                // Development mode: HIDE artifact path, SHOW dev port
+                artifactPathGroup.style.display = 'none'; 
+                devServerPortGroup.style.display = 'block'; 
+            }
+        }
+
+        // Add event listeners to radio buttons
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', updateVisibility);
+        });
+
+        // Initial visibility check on load
+        updateVisibility();
+
+        // Load saved path and port from local storage
+        const savedPath = localStorage.getItem('artifactPath');
+        if (savedPath) pathInput.value = savedPath;
+        const savedPort = localStorage.getItem('devServerPort');
+        if (savedPort) portInput.value = savedPort;
+        
+
+        launchButton.addEventListener('click', () => {
+            const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+            let config = { mode: selectedMode, artifactPath: null, devServerPort: null };
+            console.log('savedPath', savedPath, 'savedPort', savedPort);
+            if (selectedMode === 'prod') {
+                config.artifactPath = pathInput.value.trim();
+                if (!config.artifactPath) {
+                    statusDiv.textContent = 'Error: Please enter a valid artifact path for Production mode.';
+                    return;
+                }
+                if (!config.artifactPath.includes('/') && !config.artifactPath.includes('\\')) {
+                    statusDiv.textContent = 'Error: The entered path does not look valid.';
+                    return;
+                }
+                localStorage.setItem('artifactPath', config.artifactPath);
+            } else { // Dev mode
+                const portValue = portInput.value.trim();
+                if (!portValue || isNaN(parseInt(portValue))) {
+                    statusDiv.textContent = 'Error: Please enter a valid port number for Development mode.';
+                    return;
+                }
+                config.mode="prod"
+                config.devServerPort = parseInt(portValue);
+                config.artifactPath = savedPath;
+                localStorage.setItem('devServerPort', portValue); 
+            }
+            
+            statusDiv.textContent = 'Launching...';
+            launchButton.disabled = true;
+            pathInput.disabled = true;
+            portInput.disabled = true; 
+            modeRadios.forEach(radio => radio.disabled = true);
+            console.log('Launching with config:', config);
+            ipcRenderer.send('launch-main-app', config);
+            
+        });
+    </script>
+</body>
+</html> 
