@@ -47,9 +47,9 @@ Napi::Value LoadDyLib(const Napi::CallbackInfo& info) {
     dylib_handle = LoadLibrary(dlib_path);
 #else
     #if defined(__APPLE__)
-        const char* dlib_path = "./dlib.dylib";
+        const char* dlib_path = "@rpath/libdlib.dylib";
     #else // Assume Linux
-        const char* dlib_path = "./dlib.so";
+        const char* dlib_path = "libdlib.so";
     #endif
     dylib_handle = dlopen(dlib_path, RTLD_LAZY);
 #endif

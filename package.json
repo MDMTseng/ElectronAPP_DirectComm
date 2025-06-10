@@ -8,8 +8,10 @@
   },
   "scripts": {
     "start": "electron .",
-    "clean": "rm -rf src/native/build",
-    "build:native": "npm run clean && node-gyp configure --directory=src/native && node-gyp build --directory=src/native",
+    "clean": "rm -rf src/native/build ext_native/build",
+    "build:dlib": "cmake -S ext_native -B ext_native/build && cmake --build ext_native/build",
+    "build:addon": "node-gyp configure --directory=src/native && node-gyp build --directory=src/native",
+    "build:native": "npm run clean && npm run build:dlib && npm run build:addon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

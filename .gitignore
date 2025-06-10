@@ -1,3 +1,11 @@
+# Build artifacts
+build/
+ext_native/build/
 
+# Node.js
 node_modules/
-src/native/build/
+npm-debug.log
+yarn-error.log
+
+# macOS
+.DS_Store
