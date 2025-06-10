@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+The agent must get user approval for the plan before implementation.

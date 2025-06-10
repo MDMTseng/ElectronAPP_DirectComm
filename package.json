@@ -1,25 +1,28 @@
 {
   "name": "electronwebdirect",
   "version": "1.0.0",
-  "description": "",
+  "description": "Electron application with direct web integration",
   "type": "module",
   "main": "src/main.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "start": "electron .",
     "clean": "rm -rf src/native/build ext_native/build",
     "build:app": "cd EXT_APP && sh build.sh",
     "build:addon": "node-gyp configure --directory=src/native && node-gyp build --directory=src/native",
     "build:native": "npm run clean && npm run build:addon && npm run build:app",
+    "build:electron": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "build": {
+    "appId": "com.electronwebdirect.app",
+    "productName": "ElectronWebDirect"
+  },
   "devDependencies": {
     "electron": "^31.1.0",
+    "electron-builder": "^26.0.12",
     "node-gyp": "^10.1.0"
   },
   "dependencies": {

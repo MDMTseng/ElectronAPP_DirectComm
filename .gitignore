@@ -10,3 +10,5 @@ yarn-error.log
 # macOS
 .DS_Store
 EXT_APP/dist
+
+dist/
