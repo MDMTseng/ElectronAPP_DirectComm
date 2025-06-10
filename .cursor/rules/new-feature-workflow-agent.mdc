@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 # New Feature Implementation Workflow
 
-When you are asked to implement a new feature, you must follow this eight-step process:
+When you are asked to implement a new feature, you must follow this nine-step process:
 
 1.  **Check Documentation First:** Review all relevant project documentation in `<prj root>/docs/` and all previous implementation logs in `<prj root>/docs/impl/`. This is critical for understanding context, requirements, and past decisions.
 
@@ -22,3 +22,13 @@ When you are asked to implement a new feature, you must follow this eight-step p
 7.  **Log the Implementation:** After implementation is complete, create a new document in the `<prj root>/docs/impl/` directory that logs the changes made.
 
 8.  **Test the Implementation:** Thoroughly test the new feature to ensure it functions correctly and does not introduce any regressions or bugs.
+
+9.  **Write Up Detailed Documentation:** Create comprehensive user-facing documentation for the new feature in the appropriate location within the project's documentation structure. This should include usage examples, API references, configuration options, and any relevant troubleshooting information. Update any existing documentation that may be affected by the new feature.
+
+## Important Notes:
+
+- Each step must be completed before proceeding to the next
+- All documentation should be clear, concise, and maintainable
+- Implementation logs should include rationale for design decisions
+- Testing should cover both functionality and integration aspects
+- User approval is mandatory before any code changes are made
