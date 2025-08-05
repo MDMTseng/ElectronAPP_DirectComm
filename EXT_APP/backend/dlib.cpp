@@ -6,7 +6,7 @@
 // Use extern "C" to prevent C++ name mangling for the exported function
 extern "C" {
     // New function to modify data in-place with can_override flag
-    size_t exchange_inplace(void* in_out_data, size_t buffer_size, bool can_override) {
+    size_t exchange_inplace(void* in_out_data, size_t buffer_size, size_t data_size, bool can_override) {
 
         //get data
         //....

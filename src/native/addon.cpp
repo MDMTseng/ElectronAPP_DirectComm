@@ -70,24 +70,33 @@ Napi::Value ExchangeDataInPlace(const Napi::CallbackInfo& info) {
         return env.Null();
     }
 
-    if (info.Length() < 1 || !info[0].IsBuffer()) {
-        ThrowError(env, "Buffer expected");
+    if (info.Length() != 3) {
+        ThrowError(env, "Expected 3 parameters: buffer, data_size, can_override");
+        return env.Null();
+    }
+
+    if (!info[0].IsBuffer()) {
+        ThrowError(env, "First parameter arraybuffer must be a buffer");
+        return env.Null();
+    }
+
+    if (!info[1].IsNumber()) {
+        ThrowError(env, "Second parameter data_size must be a number");
+        return env.Null();
+    }
+
+    if (!info[2].IsBoolean()) {
+        ThrowError(env, "Third parameter can_override must be a boolean");
         return env.Null();
     }
 
     // Handle optional can_override parameter
-    bool can_override = true; // default value
-    if (info.Length() >= 2) {
-        if (!info[1].IsBoolean()) {
-            ThrowError(env, "Second parameter must be a boolean");
-            return env.Null();
-        }
-        can_override = info[1].As<Napi::Boolean>().Value();
-    }
+    size_t data_size = info[1].As<Napi::Number>().Uint32Value(); // data size
+    bool can_override = info[2].As<Napi::Boolean>().Value();
 
     Napi::Buffer<uint8_t> js_buffer = info[0].As<Napi::Buffer<uint8_t>>();
     
-    typedef size_t (*exchange_inplace_t)(void*, size_t, bool);
+    typedef size_t (*exchange_inplace_t)(void*, size_t, size_t, bool);
     auto exchange_func = (exchange_inplace_t)GET_SYMBOL(dylib_handle, "exchange_inplace");
 
     if (!exchange_func) {
@@ -95,7 +104,7 @@ Napi::Value ExchangeDataInPlace(const Napi::CallbackInfo& info) {
         return env.Null();
     }
 
-    size_t bytes_written = exchange_func(js_buffer.Data(), js_buffer.Length(), can_override);
+    size_t bytes_written = exchange_func(js_buffer.Data(), js_buffer.Length(),data_size, can_override);//buffer_ptr, buffer_size, data_size, can_override
     return Napi::Number::New(env, bytes_written);
 }
 

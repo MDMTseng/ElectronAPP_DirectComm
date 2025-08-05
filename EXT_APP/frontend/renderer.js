@@ -54,7 +54,7 @@ exchangeButton.addEventListener('click', () => {
     const canOverride = canOverrideCheckbox.checked;
     
     try {
-        const bytesWritten = addon.exchangeDataInPlace(buffer, canOverride);
+        const bytesWritten = addon.exchangeDataInPlace(buffer,0, canOverride);
 
         if (bytesWritten > 0) {
             if (canOverride) {
