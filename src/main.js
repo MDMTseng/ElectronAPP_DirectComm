@@ -19,7 +19,8 @@ function createBiosWindow() {
     height: 550, // Adjusted height
     webPreferences: {
       nodeIntegration: true, 
-      contextIsolation: false, 
+      contextIsolation: false,
+      webSecurity: false, // Disabled web security
     },
     autoHideMenuBar: true,
   });
@@ -60,6 +61,7 @@ function createMainWindow(config) {
       nodeIntegration: true, 
       contextIsolation: false, 
       devTools: true, // Always enable DevTools access
+      webSecurity: false, // Disabled web security
     }
   });
 

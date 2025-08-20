@@ -43,10 +43,19 @@ Napi::Value LoadDyLib(const Napi::CallbackInfo& info) {
     }
 
     std::string dlib_path = info[0].As<Napi::String>().Utf8Value();
-    dylib_handle = LOAD_LIB(dlib_path.c_str());
+    
+    // Set PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp before loading to avoid descriptor conflicts
+#ifdef _WIN32
+    _putenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp");
+#else
+    setenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "cpp", 1);
+#endif
 
+    dylib_handle = LOAD_LIB(dlib_path.c_str());
+    std::cout << "Loaded library" << std::endl;
     if (!dylib_handle) {
         ThrowError(env, "Cannot open library at '" + dlib_path + "': " + GET_ERROR());
+        return env.Null();
     }
     return env.Undefined();
 }
@@ -57,8 +66,25 @@ Napi::Value UnloadDyLib(const Napi::CallbackInfo& info) {
         ThrowError(env, "Library not loaded");
         return env.Null();
     }
-    CLOSE_LIB(dylib_handle);
+    
+    // Unload the library
+    if (CLOSE_LIB(dylib_handle) != 0) {
+        std::string error = GET_ERROR();
+        dylib_handle = nullptr;
+        ThrowError(env, "Failed to unload library: " + error);
+        return env.Null();
+    }
+    
+    std::cout << "Unloaded library" << std::endl;
     dylib_handle = nullptr;
+    
+    // Clear Protocol Buffers environment variable
+#ifdef _WIN32
+    _putenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=");
+#else
+    unsetenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION");
+#endif
+    
     return env.Undefined();
 }
 
