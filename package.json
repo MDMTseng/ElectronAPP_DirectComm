@@ -8,7 +8,7 @@
     "start": "electron .",
     "clean": "rm -rf src/native/build ext_native/build",
     "build:app": "cd EXT_APP && sh build.sh",
-    "build:addon": "node-gyp configure --directory=src/native && node-gyp build --directory=src/native",
+    "build:addon": "cd src/native && node-gyp configure --target=31.1.0 --arch=x64 --dist-url=https://electronjs.org/headers && node-gyp build",
     "build:native": "npm run clean && npm run build:addon && npm run build:app",
     "build:electron": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
