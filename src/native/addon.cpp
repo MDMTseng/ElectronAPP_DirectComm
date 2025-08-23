@@ -1,6 +1,9 @@
 #include <napi.h>
 #ifdef _WIN32
 #include <windows.h>
+#include <stdio.h>
+#include <io.h>
+#include <fcntl.h>
 #else
 #include <dlfcn.h>
 #endif
@@ -16,6 +19,21 @@ static HINSTANCE dylib_handle = nullptr;
 #define GET_SYMBOL(handle, name) GetProcAddress(handle, name)
 #define CLOSE_LIB(handle) FreeLibrary(handle)
 #define GET_ERROR() std::to_string(GetLastError())
+
+// Function to redirect stdout to console on Windows
+void RedirectStdoutToConsole() {
+    // Attach to parent console if available
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        // Redirect stdout to the console
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+        
+        // Set stdout to line buffered mode for better performance
+        setvbuf(stdout, NULL, _IOLBF, 0);
+        setvbuf(stderr, NULL, _IOLBF, 0);
+    }
+}
+
 #else
 static void* dylib_handle = nullptr;
 #define LOAD_LIB(path) dlopen(path, RTLD_LAZY)
@@ -44,15 +62,20 @@ Napi::Value LoadDyLib(const Napi::CallbackInfo& info) {
 
     std::string dlib_path = info[0].As<Napi::String>().Utf8Value();
     
-    // Set PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp before loading to avoid descriptor conflicts
+    // Redirect stdout to console on Windows and set environment variable
 #ifdef _WIN32
+    RedirectStdoutToConsole();
     _putenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp");
+    printf("Loading library from: %s\n", dlib_path.c_str());
 #else
     setenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "cpp", 1);
+    printf("Loading library from: %s\n", dlib_path.c_str());
 #endif
 
     dylib_handle = LOAD_LIB(dlib_path.c_str());
-    std::cout << "Loaded library" << std::endl;
+    
+    printf("Library loaded successfully\n");
+    
     if (!dylib_handle) {
         ThrowError(env, "Cannot open library at '" + dlib_path + "': " + GET_ERROR());
         return env.Null();
@@ -75,7 +98,8 @@ Napi::Value UnloadDyLib(const Napi::CallbackInfo& info) {
         return env.Null();
     }
     
-    std::cout << "Unloaded library" << std::endl;
+    printf("Library unloaded successfully\n");
+    
     dylib_handle = nullptr;
     
     // Clear Protocol Buffers environment variable
